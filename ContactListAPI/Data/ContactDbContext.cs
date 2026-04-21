@@ -35,6 +35,21 @@ namespace ContactListAPI.Data
                 new Subcategory { Id = 2, Name = "Klient", CategoryId = 1 },
                 new Subcategory { Id = 3, Name = "Współpracownik", CategoryId = 1 }
             );
+
+            modelBuilder.Entity<Contact>().HasData(new Contact
+            {
+                Id = 1,
+                Name = "Admin",
+                Surname = "Admin",
+                Email = "admin@gmail.com",
+                Password = "$2a$11$z9Zt8/Ic/s2ohv1aR.xiVuGYfBHlHytS7cKlEj8QVLIKTqwZREw.a",
+                Phone = "777777777",
+                BirthDate = new DateTime(2000, 1, 1),
+                CategoryID = 1,
+                SubcategoryID = 1,
+                OwnSubcategory = null
+            });
+                
         }
     }
 }

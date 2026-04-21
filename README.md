@@ -22,7 +22,7 @@ Aplikacja została stworzona jako rozwiązanie zadania rekrutacyjnego. Składa s
     - `Login`: Metoda weryfikująca poświadczenia użytkownika i generująca podpisany token JWT.
 - **ContactController**: Implementuje pełną logikę CRUD dla kontaktów.
     - `GetContacts`: Zwraca listę podstawowych danych kontaktów (dostęp publiczny).
-    - `GetContact`: Zwraca szczegółowe dane pojedynczego kontaktu wraz z nazwami kategorii.
+    - `GetContact`: Zwraca szczegółowe dane pojedynczego kontaktu wraz z nazwami kategorii (dostęp publiczny).
     - `PostContact`: Dodaje nowy kontakt, wykonuje walidację logiki kategorii i hashuje hasło.
     - `PutContact`: Bezpiecznie aktualizuje dane kontaktu przy użyciu obiektów DTO.
     - `DeleteContact`: Usuwa wybrany kontakt z bazy.
@@ -35,17 +35,33 @@ Aplikacja została stworzona jako rozwiązanie zadania rekrutacyjnego. Składa s
 - **NewContact.razor / EditContact.razor**: Komponenty obsługujące formularze z dynamiczną zmianą pól w zależności od wybranej kategorii.
 - **viewContact.razor**: Strona podglądu szczegółów kontaktu dostępna dla wszystkich użytkowników.
 
-## Sposób Kompilacji i Uruchomienia
+### Instrukcja Kompilacji Projektu
 
-1.  **Wymagania**: .NET 8 SDK, SQL Server (np. LocalDB).
-2.  **Konfiguracja**: Sprawdź `appsettings.json` w projekcie API i dostosuj `DefaultConnection`.
-3.  **Baza Danych**: W folderze projektu API wykonaj komendę:
-    ```bash
-    dotnet ef database update
-    ```
-    Komenda utworzy tabele i zasili słowniki danych.
-4.  **Uruchomienie**:
-    - Uruchom projekt **ContactListAPI** (`dotnet run`).
-    - Uruchom projekt **ContactListFrontend** (`dotnet run`).
-5.  **Dokumentacja API**: Po uruchomieniu API, interaktywna dokumentacja dostępna jest pod adresem: `https://localhost:[port]/scalar/`.
-"""
+### Krok 1: Wymagania
+Upewnij się, że na komputerze zainstalowany jest **.NET 8 SDK**.
+
+### Krok 2: Przygotowanie Bazy Danych
+1.  W pliku `appsettings.json` projektu **ContactListAPI** ustaw poprawne połączenie w `DefaultConnection` (domyślnie: `(localdb)\\mssqllocaldb`).
+2.  Zainstaluj narzędzia Entity Framework (jeśli nie są zainstalowane):
+    `dotnet tool install --global dotnet-ef`
+3.  Uruchom migrację bazy danych (będąc w folderze projektu API):
+    `dotnet restore`
+    `dotnet ef database update`
+    *(Operacja utworzy tabele i zasili słowniki danych).*
+
+#### Opcja A: Visual Studio
+1.  Kliknij Prawym Przyciskiem Myszy na **Solution** -> **Properties**.
+2.  Wybierz **Multiple startup projects**.
+3.  Dla projektów `ContactListAPI` oraz `ContactListFrontend` ustaw akcję na **Start** i zapisz zmiany.
+4.  Uruchom system przyciskiem **Start (F5)**.
+
+#### Opcja B: Terminal
+Wymagane jest uruchomienie dwóch procesów w osobnych terminalach:
+1.  **Terminal 1 (Backend):** Wejdź do folderu `ContactListAPI` i wpisz `dotnet run --urls "https://localhost:7024"`.
+2.  **Terminal 2 (Frontend):** Wejdź do folderu `ContactListFrontend` i wpisz `dotnet run`.
+
+Po uruchomieniu aplikacja otworzy się w przeglądarce. Interaktywna dokumentacja techniczna API dostępna jest pod adresem: `https://localhost:7024/scalar/`.
+
+**Login i hasło do konta**
+ email : admin@gmail.com
+ haslo : Admin111!!!
