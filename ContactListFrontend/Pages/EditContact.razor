@@ -1,0 +1,180 @@
+﻿@page "/editContact/{Id:int}"
+@using Blazored.LocalStorage
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+
+<h3>Edytuj kontakt</h3>
+
+@if (editModel == null)
+{
+    <p>Ładowanie danych...</p>
+}
+else
+{
+    @if (errorMessages.Any())
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Uwaga! Popraw poniższe błędy:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach (var error in errorMessages)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+            <button type="button" class="btn-close" @onclick="() => errorMessages.Clear()" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card p-4 shadow-sm">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label>Imię</label>
+                <input class="form-control" @bind="editModel.Name" />
+            </div>
+            <div class="col-md-6 mb-3">
+                <label>Nazwisko</label>
+                <input class="form-control" @bind="editModel.Surname" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label>Email</label>
+            <input type="email" class="form-control" @bind="editModel.Email" />
+        </div>
+
+
+        <div class="mb-3">
+            <label>Telefon</label>
+            <input type="tel" class="form-control" @bind="editModel.Phone" />
+        </div>
+
+        <div class="mb-3">
+            <label>Data urodzenia</label>
+            <input type="date" class="form-control" @bind="editModel.BirthDate" />
+        </div>
+
+        <div class="mb-3">
+            <label>Kategoria</label>
+            <select class="form-control" @onchange="OnCategoryChanged" value="@editModel.CategoryID">
+                <option value="1">Służbowy</option>
+                <option value="2">Prywatny</option>
+                <option value="3">Inny</option>
+            </select>
+        </div>
+
+        @if (editModel.CategoryID == 1)
+        {
+            <div class="mb-3">
+                <label>Podkategoria </label>
+                <select class="form-control" @bind="editModel.SubcategoryID">
+                    <option value="1">Szef</option>
+                    <option value="2">Klient</option>
+                    <option value="3">Współpracownik</option>
+                </select>
+            </div>
+        }
+        else if (editModel.CategoryID == 3)
+        {
+            <div class="mb-3">
+                <label>Własna podkategoria</label>
+                <input class="form-control" @bind="editModel.OwnSubcategory" />
+            </div>
+        }
+
+        <div class="mt-3">
+            <button class="btn btn-primary" @onclick="UpdateContact">Zapisz zmiany</button>
+            <button class="btn btn-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Anuluj</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private ContactFormModel? editModel;
+    private List<string> errorMessages = new();
+    public class ValidationProblemDetails
+    {
+        public Dictionary<string, List<string>> Errors { get; set; } = new();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/contact/{Id}");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            editModel = await response.Content.ReadFromJsonAsync<ContactFormModel>();
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/"); 
+        }
+    }
+
+    private void OnCategoryChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int catId))
+        {
+            editModel!.CategoryID = catId;
+            editModel.SubcategoryID = null;
+            editModel.OwnSubcategory = null;
+        }
+    }
+
+    private async Task UpdateContact()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        var request = new HttpRequestMessage(HttpMethod.Put, $"api/Contact/{Id}");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        request.Content = JsonContent.Create(editModel);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        {
+            var problemDetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+            if (problemDetails != null && problemDetails.Errors.Any())
+            {
+                foreach (var errorList in problemDetails.Errors.Values)
+                {
+                    errorMessages.AddRange(errorList);
+                }
+            }
+            else
+            {
+                errorMessages.Add("Sprawdź poprawność wprowadzonych danych.");
+            }
+        }
+        else
+        {
+            errorMessages.Add("Wystąpił problem z połączeniem z serwerem.");
+        }
+    }
+
+    public class ContactFormModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Surname { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = ""; 
+        public string Phone { get; set; } = "";
+        public DateTime BirthDate { get; set; }
+        public int CategoryID { get; set; }
+        public int? SubcategoryID { get; set; }
+        public string? OwnSubcategory { get; set; }
+    }
+}

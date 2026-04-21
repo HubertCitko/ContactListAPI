@@ -1,0 +1,48 @@
+﻿@inherits LayoutComponentBase
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+<CascadingValue Value="isLoggedIn">
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+
+        <main>
+            <div class="top-row px-4">
+                @if (isLoggedIn)
+                {
+                    <span class="me-3">Witaj, <strong>Użytkowniku!</strong></span>
+                    <button class="btn btn-outline-danger btn-sm" @onclick="Logout">Wyloguj</button>
+                }
+                else
+                {
+                    <a href="login">Zaloguj się</a>
+                }
+            </div>
+
+            <article class="content px-4">
+            
+                    @Body
+            
+            </article>
+        </main>
+    </div>
+</CascadingValue>
+@code {
+    private bool isLoggedIn = false;
+
+    // Sprawdzamy status przy każdym załadowaniu komponentu
+    protected override async Task OnParametersSetAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        isLoggedIn = !string.IsNullOrEmpty(token);
+    }
+
+    private async Task Logout()
+    {
+        await LocalStorage.RemoveItemAsync("authToken");
+        isLoggedIn = false;
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}

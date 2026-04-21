@@ -1,0 +1,69 @@
+﻿@page "/login"
+@using Blazored.LocalStorage
+@inject HttpClient Http
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+
+<PageTitle>Logowanie</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h3>Logowanie do systemu</h3>
+        <hr />
+
+        <div class="mb-3">
+            <label>Adres Email</label>
+            <input type="email" class="form-control" @bind="loginModel.Email" />
+        </div>
+
+        <div class="mb-3">
+            <label>Hasło</label>
+            <input type="password" class="form-control" @bind="loginModel.Password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <button class="btn btn-primary" @onclick="HandleLogin">Zaloguj się</button>
+    </div>
+</div>
+
+@code {
+    public class LoginDto
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+
+    public class AuthResponse
+    {
+        public string Token { get; set; } = "";
+    }
+
+    private LoginDto loginModel = new LoginDto();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+
+        var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+            if (result != null && !string.IsNullOrEmpty(result.Token))
+            {
+                await LocalStorage.SetItemAsync("authToken", result.Token);
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        else
+        {
+            errorMessage = "Błędny email lub hasło.";
+        }
+    }
+}

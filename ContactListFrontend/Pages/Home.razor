@@ -1,0 +1,92 @@
+﻿@page "/"
+@inject HttpClient Http
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject IJSRuntime JS
+@inject NavigationManager NavigationManager
+
+<PageTitle>Kontakty</PageTitle>
+
+<h1>Lista Kontaktów</h1>
+
+@if (contacts == null)
+{
+    <p><em>Ładowanie danych z serwera...</em></p>
+}
+else if (contacts.Length == 0)
+{
+    <p>Brak kontaktów w bazie.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contact in contacts)
+            {
+                <tr>
+                    <td>@contact.Name</td>
+                    <td>@contact.Surname</td>
+                    <td>@contact.Email</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" @onclick='() => NavigationManager.NavigateTo($"/viewContact/{contact.Id}")'>Szczegóły</button>
+                    </td>
+                    <td>
+                        @if (isLoggedIn)
+                        {
+                            <button class="btn btn-warning btn-sm" @onclick='() => NavigationManager.NavigateTo($"/editContact/{contact.Id}")'>Edytuj</button>
+                        }
+                    </td>
+                    <td>
+                        @if (isLoggedIn)
+                        {
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteContact(contact.Id)">Usuń</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [CascadingParameter]
+    public bool isLoggedIn { get; set; }
+    public class ContactDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Surname { get; set; } = "";
+        public string Email { get; set; } = "";
+    }
+
+    private ContactDto[]? contacts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        contacts = await Http.GetFromJsonAsync<ContactDto[]>("api/contact");
+    }
+    private async Task DeleteContact(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Czy na pewno chcesz usunąć ten kontakt?");
+
+        if (!confirmed) return;
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"api/contact/{id}");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            contacts = await Http.GetFromJsonAsync<ContactDto[]>("api/contact");
+        }
+    }
+}

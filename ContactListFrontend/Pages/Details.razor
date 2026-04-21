@@ -1,0 +1,115 @@
+﻿@page "/viewContact/{Id:int}"
+@inject NavigationManager NavigationManager
+@using Blazored.LocalStorage
+@inject ILocalStorageService LocalStorage
+@inject HttpClient Http
+
+<h3>Szczegóły</h3>
+
+@if (viewModel == null)
+{
+    <p>Ładowanie danych...</p>
+}
+else
+{
+    <div>
+        <div class=" mb-3">
+            <label>Imię: </label>
+                @viewModel.Name
+        </div>
+
+        <div class=" mb-3">
+            <label>Nazwisko: </label>
+                @viewModel.Surname
+        </div>
+
+        <div class="mb-3">
+            <label>Email: </label>
+            @viewModel.Email
+        </div>
+
+
+        <div class="mb-3">
+            <label>Telefon: </label>
+            @viewModel.Phone
+        </div>
+
+        <div class="mb-3">
+            <label>Data urodzenia: </label>
+            @viewModel.BirthDate.ToShortDateString()
+        </div>
+
+        <div class="mb-3">
+            <label>Kategoria: </label>
+            <strong>
+                @viewModel.CategoryName
+
+                @if (viewModel.CategoryID == 1 && !string.IsNullOrEmpty(viewModel.SubcategoryName))
+                {
+                    <span> (@viewModel.SubcategoryName)</span>
+                }
+                else if (viewModel.CategoryID == 3 && !string.IsNullOrEmpty(viewModel.OwnSubcategory))
+                {
+                    <span> (@viewModel.OwnSubcategory)</span>
+                }
+            </strong>
+        </div>
+
+       
+
+        <div class="mt-3">
+            <button class="btn btn-secondary" @onclick='() => NavigationManager.NavigateTo("/")'>Anuluj</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    public class ContactDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Surname { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string Phone { get; set; } = "";
+        public DateTime BirthDate { get; set; }
+        public int CategoryID { get; set; }
+        public int? SubcategoryID { get; set; }
+        public string? OwnSubcategory { get; set; }
+        public string? CategoryName { get; set; }
+        public string? SubcategoryName { get; set; }
+    }
+    ContactDto? viewModel = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        var request = new HttpRequestMessage(HttpMethod.Get, $"api/contact/{Id}");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            viewModel = await response.Content.ReadFromJsonAsync<ContactDto>();
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    public class Category
+    {
+
+    }
+    public class Subcategory
+    {
+        
+    }
+    
+}
