@@ -38,7 +38,7 @@ Aplikacja została stworzona jako rozwiązanie zadania rekrutacyjnego. Składa s
 ### Instrukcja Kompilacji Projektu
 
 ### Krok 1: Wymagania
-Upewnij się, że na komputerze zainstalowany jest **.NET 8 SDK**.
+Upewnij się, że na komputerze zainstalowany jest **.NET 9.06 SDK**.
 
 ### Krok 2: Przygotowanie Bazy Danych
 1.  W pliku `appsettings.json` projektu **ContactListAPI** ustaw poprawne połączenie w `DefaultConnection` (domyślnie: `(localdb)\\mssqllocaldb`).
